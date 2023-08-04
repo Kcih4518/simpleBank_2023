@@ -35,6 +35,7 @@ repos:
             description: This hook runs go test.
             entry: go test -v ./...
             language: golang
+            files: .go$
             stages: [commit]
     - repo: local
       hooks:
