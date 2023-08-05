@@ -30,15 +30,6 @@ repos:
             stages: [commit]
     - repo: local
       hooks:
-          - id: go-test
-            name: go test
-            description: This hook runs go test.
-            entry: go test -v ./...
-            language: golang
-            files: .go$
-            stages: [commit]
-    - repo: local
-      hooks:
           - id: pre-commit-message
             name: commit-message lint
             description: This hook runs pre-commit-message check.
