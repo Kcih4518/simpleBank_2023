@@ -14,4 +14,10 @@ createdb:
 dropdb:
 					docker exec -it postgres dropdb simple_bank
 
-.PHONY: network postgres createdb dropdb
+migrateup:
+					migrate -path db/migration -database "$(DB_URL)" -verbose up
+
+migratedown:
+					migrate -path db/migration -database "$(DB_URL)" -verbose down
+
+.PHONY: network postgres createdb dropdb migrateup migratedown
