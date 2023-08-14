@@ -14,7 +14,7 @@ SELECT *
 FROM accounts
 WHERE id = $1
 LIMIT 1
-FOR
+FOR NO KEY
 UPDATE;
 
 -- name: ListAccounts :many
