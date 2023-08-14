@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 )
 
 // Introduced `Store` struct, encapsulating `Queries` and integrating with `sql.DB` for transactional operations.
@@ -60,6 +61,10 @@ type TransferTxResult struct {
 	ToEntry     Entry    `json:"to_entry"`
 }
 
+// type of empty struct to use as a key for the context's values map
+// the second bracket is a new empty obje of that type.
+var txKey = struct{}{}
+
 // We create a transfer record with amount equals to 10.
 // We create an entry record for account 1 with amount equals to -10, since money is moving out of this account.
 // We create another entry record for account 2, but with amount equals to 10, because money is moving in to this account.
@@ -70,6 +75,9 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
+		txName := ctx.Value(txKey)
+		fmt.Println(txName, "create transfer")
+
 		// should convert arg (type TransferTxParams) to CreateTransferParams instead of using struct literal (gosimple)
 		// Because CreateTransferParams has same fields as TransferTxParams.
 		result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams(arg))
@@ -78,6 +86,7 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 			return err
 		}
 
+		fmt.Println(txName, "create entry 1")
 		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.FromAccountID,
 			Amount:    -arg.Amount,
@@ -87,6 +96,7 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 			return err
 		}
 
+		fmt.Println(txName, "create entry 2")
 		result.ToEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.ToAccountID,
 			Amount:    arg.Amount,
@@ -95,9 +105,43 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		if err != nil {
 			return err
 		}
-		return nil
 
-		// TODO: Before implement update accounts' balance we have to solve db lock problem.
+		// Implement update accounts' balance
+		// move money out of account1
+		fmt.Println(txName, "get account 1")
+		account1, err := q.GetAccountForUpdate(ctx, arg.FromAccountID)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(txName, "update account 1")
+		result.FromAccount, err = q.UpdateAccount(ctx, UpdateAccountParams{
+			ID:      arg.FromAccountID,
+			Balance: account1.Balance - arg.Amount,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		// move money into account2
+		fmt.Println(txName, "get account 2")
+		account2, err := q.GetAccountForUpdate(ctx, arg.ToAccountID)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(txName, "update account 2")
+		result.ToAccount, err = q.UpdateAccount(ctx, UpdateAccountParams{
+			ID:      arg.ToAccountID,
+			Balance: account2.Balance + arg.Amount,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 
 	return result, err
