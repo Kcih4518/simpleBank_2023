@@ -14,4 +14,19 @@ createdb:
 dropdb:
 					docker exec -it postgres dropdb simple_bank
 
-.PHONY: network postgres createdb dropdb
+migrateup:
+					migrate -path db/migration -database "$(DB_URL)" -verbose up
+
+migratedown:
+					migrate -path db/migration -database "$(DB_URL)" -verbose down
+
+sqlc:
+					sqlc generate
+
+test:
+					go test -count=1 -v -cover ./...
+
+clean:
+					docker exec -it postgres psql -U root -d simple_bank -c "TRUNCATE TABLE accounts, entries, transfers CASCADE;"
+
+.PHONY: network postgres createdb dropdb migrateup migratedown sqlc test clean
