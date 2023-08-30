@@ -15,7 +15,13 @@ func NewServer(store *db.Store) *Server {
 	router := gin.Default()
 
 	// TODO: add routes to router
+	router.POST("/accounts", server.createAccount)
 
 	server.router = router
 	return server
+}
+
+// H is a shortcut for map[string]interface{}
+func errorResponse(err error) gin.H {
+	return gin.H{"error": err.Error()}
 }
