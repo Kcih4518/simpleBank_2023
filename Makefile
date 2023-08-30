@@ -29,4 +29,8 @@ test:
 clean:
 					docker exec -it postgres psql -U root -d simple_bank -c "TRUNCATE TABLE accounts, entries, transfers CASCADE;"
 
-.PHONY: network postgres createdb dropdb migrateup migratedown sqlc test clean
+server:
+					go run main.go
+
+
+.PHONY: network postgres createdb dropdb migrateup migratedown sqlc test clean server
