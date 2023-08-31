@@ -32,5 +32,7 @@ clean:
 server:
 					go run main.go
 
+air:
+					air -c .air.toml
 
-.PHONY: network postgres createdb dropdb migrateup migratedown sqlc test clean server
+.PHONY: network postgres createdb dropdb migrateup migratedown sqlc test clean server air
