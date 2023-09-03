@@ -6,23 +6,30 @@ import (
 	"fmt"
 )
 
-// Introduced `Store` struct, encapsulating `Queries` and integrating with `sql.DB` for transactional operations.
+// Store is an interface that defines methods for our storage system.
+type Store interface {
+	Querier
+	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
+}
+
+// SQLStore is the concrete implementation of the Store interface for SQL database.
+// Introduced `SQLStore` struct, encapsulating `Queries` and integrating with `sql.DB` for transactional operations.
 // Implemented `NewStore` function for initializing `Store`.
 // Added `execTx` method to support customized operations within a transaction, automatically handling commit and rollback.
 
-type Store struct {
+type SQLStore struct {
 	*Queries
 	db *sql.DB
 }
 
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{
 		db:      db,
 		Queries: New(db),
 	}
 }
 
-func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
+func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -93,7 +100,7 @@ var txKey = struct{}{}
 // We create another entry record for account 2, but with amount equals to 10, because money is moving in to this account.
 // Then we update the balance of account 1 by subtracting 10 from it.
 // And finally we update the balance of account 2 by adding 10 to it.
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
