@@ -12,7 +12,7 @@ import (
 // Using go validator to validate the request body
 type createAccountRequest struct {
 	Owner    string `json:"owner" binding:"required"`
-	Currency string `json:"currency" binding:"required,oneof=USD EUR CAD"`
+	Currency string `json:"currency" binding:"required,currency"`
 }
 
 // errorResponse is a helper to format error message
