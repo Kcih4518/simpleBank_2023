@@ -71,12 +71,12 @@ func TestCreateAccountAPI(t *testing.T) {
 		{
 			name: "InternalError",
 			body: gin.H{
-				"owner":    "some_owner",
+				"owner":    account.Owner,
 				"currency": account.Currency,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				arg := db.CreateAccountParams{
-					Owner:    "some_owner",
+					Owner:    account.Owner,
 					Balance:  0,
 					Currency: account.Currency,
 				}
@@ -92,11 +92,17 @@ func TestCreateAccountAPI(t *testing.T) {
 		{
 			name: "InvalidCurrency",
 			body: gin.H{
+				"owner":    account.Owner,
 				"currency": "invalid",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				arg := db.CreateAccountParams{
+					Owner:    account.Owner,
+					Balance:  0,
+					Currency: "invalid",
+				}
 				store.EXPECT().
-					CreateAccount(gomock.Any(), gomock.Any()).
+					CreateAccount(gomock.Any(), gomock.Eq(arg)).
 					Times(0)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
