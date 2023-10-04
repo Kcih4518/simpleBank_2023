@@ -7,6 +7,11 @@ import (
 	"github.com/google/uuid"
 )
 
+var (
+	ErrInvalidToken = errors.New("token is invalid")
+	ErrExpiredToken = errors.New("token has expired")
+)
+
 // Username used to identify the user.
 // IssuedAt is the time when the token was create.
 // ExpiredAt is the time when the token will expire.
@@ -35,8 +40,6 @@ func NewPayload(username string, duration time.Duration) (*Payload, error) {
 
 // Valid will check if the token is valid or not.
 // To avoid Error: struct doesn’t implement the jwt.Claims interface.
-var ErrExpiredToken = errors.New("token has expired")
-
 func (payload *Payload) Valid() error {
 	if time.Now().After(payload.ExpiredAt) {
 		return ErrExpiredToken
