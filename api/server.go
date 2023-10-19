@@ -1,21 +1,36 @@
 package api
 
 import (
+	"fmt"
 	"log"
 
 	db "github.com/Kcih4518/simpleBank_2023/db/sqlc"
+	"github.com/Kcih4518/simpleBank_2023/token"
+	"github.com/Kcih4518/simpleBank_2023/util"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 )
 
 type Server struct {
-	store  db.Store
-	router *gin.Engine
+	config     util.Config
+	store      db.Store
+	tokenMaker token.Maker
+	router     *gin.Engine
 }
 
-func NewServer(store db.Store) *Server {
-	server := &Server{store: store}
+func NewServer(config util.Config, store db.Store) (*Server, error) {
+	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token maker: %w", err)
+	}
+
+	server := &Server{
+		config:     config,
+		store:      store,
+		tokenMaker: tokenMaker,
+	}
+
 	router := gin.Default()
 
 	// register various handler functions
@@ -42,7 +57,7 @@ func NewServer(store db.Store) *Server {
 	router.POST("/transfers", server.createTransfer)
 
 	server.router = router
-	return server
+	return server, nil
 }
 
 // H is a shortcut for map[string]interface{}
