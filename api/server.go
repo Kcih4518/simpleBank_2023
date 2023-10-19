@@ -31,8 +31,6 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		tokenMaker: tokenMaker,
 	}
 
-	router := gin.Default()
-
 	// register various handler functions
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		if err := v.RegisterValidation("currency", validCurrency); err != nil {
@@ -42,7 +40,13 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		}
 	}
 
-	// TODO: add routes
+	server.setupRouter()
+	return server, nil
+}
+
+func (server *Server) setupRouter() {
+	router := gin.Default()
+
 	// user
 	router.POST("/users", server.createUser)
 	router.POST("/users/login", server.loginUser)
@@ -58,7 +62,6 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 	router.POST("/transfers", server.createTransfer)
 
 	server.router = router
-	return server, nil
 }
 
 // H is a shortcut for map[string]interface{}
